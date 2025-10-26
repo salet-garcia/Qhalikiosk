@@ -322,19 +322,23 @@ const H2 = ({ children }) => (
 const P = ({ children, center = false }) => (
   <div style={{ whiteSpace: "pre-line", color: THEME.muted, fontSize: 30, lineHeight: 1.28, textAlign: center ? "center" : "left" }}>{children}</div>
 );
-const BtnPrimary = ({ children, onClick, wide }) => (
+const BtnPrimary = ({ children, onClick, wide, selected }) => (
   <button onClick={() => { SFX.click(); onClick && onClick(); }} style={{
     width: wide ? "100%" : undefined,
-    background: "#fff", color: THEME.blue,
+    background: selected ? THEME.blue : "#B7E5F4", // activo o inactivo
+    color: selected ? "#fff" : THEME.blueDark,
     border: `5px solid ${THEME.sky}`, borderRadius: 999,
-    fontWeight: 900, fontSize: 32, padding: "16px 28px"
+    fontWeight: 900, fontSize: 32, padding: "16px 28px",
+    transition: "all 0.15s ease",
   }}>{children}</button>
 );
-const BtnSolid = ({ children, onClick, wide }) => (
+const BtnSolid = ({ children, onClick, wide, selected }) => (
   <button onClick={() => { SFX.click(); onClick && onClick(); }} style={{
     width: wide ? "100%" : undefined,
-    background: THEME.blueDark, color: "#fff",
-    borderRadius: 999, fontWeight: 800, fontSize: 32, padding: "18px 28px"
+    background: selected ? THEME.blueDark : "#B7E5F4",
+    color: selected ? "#fff" :THEME.text,
+    borderRadius: 999, fontWeight: 800, fontSize: 32, padding: "18px 28px",
+    transition: "all 0.15s ease",
   }}>{children}</button>
 );
 // “Card”
@@ -369,67 +373,197 @@ const Frame = ({ children }) => {
 };
 
 // ====== Pantallas
+
 function LangScreen({ t, lang, setLang, onNext }) {
+  const btnEs = useRef(null);
+  const btnQu = useRef(null);
+  const btnOk = useRef(null);
+  const buttons = [btnEs, btnQu, btnOk];
+
+  const focused = useJoystickNavigation(buttons, () => buttons[focused]?.current?.click(), onNext);
+
   return (
     <Card>
-      <div style={{ display: "grid", gap: 18 }}>
-        {/* Logo + título */}
-        <div style={{ display: "grid", gridTemplateColumns: "1fr auto", alignItems: "center", gap: 16 }}>
-          <H1>{t.choose_title}</H1>
-          <MediaBlock type="image" src="/assets/images/Logo_Qhali-Kiosk.png" alt="QhaliKiosk" height={96} />
-        </div>
+      <div
+        style={{
+          display: "grid",
+          placeItems: "center",
+          gap: 24,
+          textAlign: "center",
+          width: "100%",
+          maxWidth: 800,
+        }}
+      >
+        {/* Título */}
+        <H1>{t.choose_title}</H1>
+        <P center>{t.choose_sub}</P>
 
-        <div style={{ display: "grid", gridTemplateColumns: "1fr auto", alignItems: "center", gap: 16 }}>
-          <P>{t.choose_sub}</P>
-          <MediaBlock type="video" src="/assets/videos/Joystick.mp4" height={72} />
-        </div>
+        {/* Botones de selección de idioma */}
+        <div style={{ display: "grid", gap: 16, width: "100%", marginTop: 16 }}>
+          {/* Español */}
+          <button
+            ref={btnEs}
+            onClick={() => setLang("es")}
+            style={{
+              width: "100%",
+              background: focused === 0 ? "#005F9E" : "#66CCFF", // cambio de color
+              color: "#fff",
+              borderRadius: 999,
+              fontWeight: 800,
+              fontSize: 36,
+              padding: "20px 36px",
+              border: "none",
+              transition: "background 0.2s ease, transform 0.2s",
+              transform: focused === 0 ? "scale(1.05)" : "scale(1.0)",
+            }}
+          >
+            Español
+          </button>
 
-        <div style={{ display: "grid", gap: 14, marginTop: 6, maxWidth: 720 }}>
-          <BtnPrimary wide onClick={() => setLang("es")}>{t.es}{lang === "es" ? " ✓" : ""}</BtnPrimary>
-          <BtnSolid   wide onClick={() => setLang("qu")}>{t.qu}{lang === "qu" ? " ✓" : ""}</BtnSolid>
-        </div>
-        <div style={{ display: "grid", placeItems: "start", marginTop: 8 }}>
-          <div style={{ width: "100%", maxWidth: 720 }}>
-            <BtnSolid wide onClick={() => onNext(S.PRE1)}>{t.ok}</BtnSolid>
-          </div>
+          {/* Quechua */}
+          <button
+            ref={btnQu}
+            onClick={() => setLang("qu")}
+            style={{
+              width: "100%",
+              background: focused === 1 ? "#005F9E" : "#66CCFF",
+              color: "#fff",
+              borderRadius: 999,
+              fontWeight: 800,
+              fontSize: 36,
+              padding: "20px 36px",
+              border: "none",
+              transition: "background 0.2s ease, transform 0.2s",
+              transform: focused === 1 ? "scale(1.05)" : "scale(1.0)",
+            }}
+          >
+            Quechua
+          </button>
+
+          {/* Continuar */}
+          <button
+            ref={btnOk}
+            onClick={() => onNext(S.PRE1)}
+            style={{
+              width: "100%",
+              background: focused === 2 ? "#005F9E" : "#66CCFF",
+              color: "#fff",
+              borderRadius: 999,
+              fontWeight: 800,
+              fontSize: 36,
+              padding: "20px 36px",
+              border: "none",
+              transition: "background 0.2s ease, transform 0.2s",
+              transform: focused === 2 ? "scale(1.05)" : "scale(1.0)",
+            }}
+          >
+            {t.ok}
+          </button>
         </div>
       </div>
     </Card>
   );
 }
 
-function PreItem({ img, text }) {
-  return (
-    <div style={{ display:"flex", alignItems:"center", gap:18 }}>
-      <MediaBlock type="image" src={img} height={76} />
-      <P>{text}</P>
-    </div>
+
+const PreItem = React.forwardRef(({ img, text, active, selected, onClick }, ref) => (
+  <div
+    ref={ref}
+    onClick={onClick}
+    style={{
+      display: "flex",
+      alignItems: "center",
+      gap: 18,
+      cursor: "pointer",
+      background: selected ? "#E2E8F0" : "transparent",
+      borderRadius: 12,
+      padding: "8px 12px",
+      transition: "0.2s",
+    }}
+  >
+    <MediaBlock type="image" src={img} height={76} />
+    <P>{text}</P>
+  </div>
+));
+
+function Precheck({ t, onNext, onBack }) {
+  const [selectedItems, setSelectedItems] = useState([false, false, false]);
+
+  const ref1 = useRef(null);
+  const ref2 = useRef(null);
+  const ref3 = useRef(null);
+  const refCont = useRef(null);
+  const buttons = [ref1, ref2, ref3, refCont];
+
+  const focused = useJoystickNavigation(
+    buttons,
+    () => {
+      if (focused < 3) {
+        setSelectedItems((prev) => prev.map((v, i) => (i === focused ? !v : v)));
+      } else {
+        onNext();
+      }
+    },
+    onBack
   );
-}
-function Precheck({ t, a, b, onNext, solid, icons }) {
+
   return (
     <Card>
-      <div style={{ display: "grid", gap: 20 }}>
-        <H2>{t.pre_title}</H2>
-        <P center>{t.pre_sub}</P>
-        <div style={{ display:"grid", gap:20, maxWidth: 720 }}>
-          <PreItem img={icons[0]} text={a} />
-          <PreItem img={icons[1]} text={b} />
-        </div>
-        <div style={{ display: "grid", placeItems: "start", marginTop: 6 }}>
-          <div style={{ width: "100%", maxWidth: 720 }}>
-            {solid ? <BtnSolid wide onClick={onNext}>{t.ok}</BtnSolid> : <BtnPrimary wide onClick={onNext}>{t.ok}</BtnPrimary>}
-          </div>
-        </div>
+      <H2 style={{ color: THEME.blue, fontSize: 56, marginBottom: 16 }}>{t.pre_title}</H2>
+      <p style={{ fontSize: 24, color: THEME.muted, marginBottom: 32 }}>{t.pre_sub}</p>
+
+      <div style={{ display: "grid", gap: 16, maxWidth: 720 }}>
+        <PreItem
+          img="/assets/images/No_bebidas.png"
+          text={t.pre_a1}
+          active={selectedItems[0]}
+          selected={focused === 0}
+          onClick={() => setSelectedItems((p) => p.map((v, i) => (i === 0 ? !v : v)))}
+          ref={ref1}
+        />
+        <PreItem
+          img="/assets/images/Ayuno.png"
+          text={t.pre_b1}
+          active={selectedItems[1]}
+          selected={focused === 1}
+          onClick={() => setSelectedItems((p) => p.map((v, i) => (i === 1 ? !v : v)))}
+          ref={ref2}
+        />
+        <PreItem
+          img="/assets/images/No_embarazada.png"
+          text={t.pre_b2}
+          active={selectedItems[2]}
+          selected={focused === 2}
+          onClick={() => setSelectedItems((p) => p.map((v, i) => (i === 2 ? !v : v)))}
+          ref={ref3}
+        />
+      </div>
+
+      <div style={{ marginTop: 48, maxWidth: 480 }}>
+        <BtnSolid ref={refCont} wide onClick={onNext} selected={focused === 3}>
+          {t.continuar}
+        </BtnSolid>
       </div>
     </Card>
   );
 }
-
+     
 function DNIScreen({ t, onBack, onDone }) {
   const [dni, setDni] = useState("");
   const press = (d) => setDni((v) => (v + d).slice(0, 8));
   const del = () => setDni((v) => v.slice(0, -1));
+
+  // ===== Refs de TODOS los botones =====
+  const numRefs = Array.from({ length: 12 }, () => useRef(null)); // 1–9 + 0
+  const delRef = useRef(null);
+  const listoRef = useRef(null);
+  const backRef = useRef(null);
+
+  const buttons = [...numRefs, delRef, listoRef, backRef];
+
+  // ===== Integrar el joystick =====
+  const focused = useJoystickNavigation(buttons, null, onBack);
+
   return (
     <Card>
       <div style={{ display: "grid", gap: 24 }}>
@@ -469,14 +603,16 @@ function DNIScreen({ t, onBack, onDone }) {
               n ? (
                 <button
                   key={i}
+                  ref={numRefs[i]}
                   onClick={() => press(n)}
                   style={{
                     height: 86,
                     borderRadius: 16,
-                    background: "#CDECF5",
-                    color: THEME.blue,
+                    background: focused === i ? "#2E6FD8" : "#CDECF5",
+                    color: focused === i ? "#fff" : THEME.blue,
                     fontWeight: 900,
                     fontSize: 34,
+                    transition: "0.15s",
                   }}
                 >
                   {n}
@@ -499,40 +635,106 @@ function DNIScreen({ t, onBack, onDone }) {
             gap: 16,
           }}
         >
-          <BtnSolid onClick={del}>{t.borrar}</BtnSolid>
-          <BtnPrimary onClick={() => onDone(dni)}>{t.listo}</BtnPrimary>
+          <button
+            ref={delRef}
+            onClick={del}
+            style={{
+              background: focused === numRefs.length ? "#D63384" : THEME.blueDark,
+              color: "#fff",
+              borderRadius: 999,
+              fontWeight: 800,
+              fontSize: 32,
+              padding: "18px 28px",
+              transition: "0.15s",
+            }}
+          >
+            {t.borrar}
+          </button>
+
+          <button
+            ref={listoRef}
+            onClick={() => onDone(dni)}
+            style={{
+              background: focused === numRefs.length + 1 ? "#1FB197" : "#CDECF5",
+              color: focused === numRefs.length + 1 ? "#fff" : THEME.blue,
+              borderRadius: 999,
+              fontWeight: 900,
+              fontSize: 32,
+              padding: "16px 28px",
+              transition: "0.15s",
+            }}
+          >
+            {t.listo}
+          </button>
         </div>
 
+        {/* Retroceder */}
         <div style={{ display: "grid", placeItems: "start" }}>
           <div style={{ width: "100%", maxWidth: 720 }}>
-            <BtnPrimary wide onClick={onBack}>{t.back}</BtnPrimary>
+            <button
+              ref={backRef}
+              onClick={onBack}
+              style={{
+                width: "100%",
+                background: focused === numRefs.length + 2 ? THEME.sky : "#fff",
+                color: focused === numRefs.length + 2 ? THEME.blueDark : THEME.blue,
+                border: `5px solid ${THEME.sky}`,
+                borderRadius: 999,
+                fontWeight: 900,
+                fontSize: 32,
+                padding: "16px 28px",
+                transition: "0.15s",
+              }}
+            >
+              {t.back}
+            </button>
           </div>
         </div>
       </div>
     </Card>
   );
-}
+}       
 
 function TempInfo({ t, onMeasure, onBack }) {
+  const btn1 = useRef(null);
+  const btn2 = useRef(null);
+  const btn3 = useRef(null);
+  const buttons = [btn1, btn2, btn3];
+
+  const focused = useJoystickNavigation(buttons, onMeasure, onBack);
+
   return (
     <Card>
       <div style={{ display: "grid", gap: 16 }}>
         <H2>{t.temp_title}</H2>
         <P center>{t.temp_instr}</P>
+
         <MediaBlock type="video" src="/assets/videos/Menton.mp4" height={240} />
+
         <div style={{ display: "grid", gap: 12, marginTop: 8, maxWidth: 720 }}>
-          <BtnSolid  wide onClick={() => { SFX.start(); onMeasure(); }}>{t.medir}</BtnSolid>
-          <BtnPrimary wide onClick={onBack}>{t.back}</BtnPrimary>
-          <BtnPrimary wide onClick={() => alert("Reproducir instrucción")}>{t.repeat}</BtnPrimary>
+          <BtnSolid wide onClick={onMeasure} selected={focused === 0} ref={btn1}>
+            {t.medir}
+          </BtnSolid>
+          <BtnPrimary wide onClick={onBack} selected={focused === 1} ref={btn2}>
+            {t.back}
+          </BtnPrimary>
+          <BtnPrimary
+            wide
+            onClick={() => alert("Reproducir instrucción")}
+            selected={focused === 2}
+            ref={btn3}
+          >
+            {t.repeat}
+          </BtnPrimary>
         </div>
       </div>
     </Card>
   );
 }
 
+
 function Countdown({ t, onDone }) {
-  const [c, setC] = useState(5);
-  useEffect(() => { if (c <= 0) return void onDone(); const id = setTimeout(() => setC(x => x - 1), 1000); return () => clearTimeout(id); }, [c]);
+  const [c, setC] = useState(5); useEffect(() => { if (c <= 0) return void onDone(); const id = setTimeout(() => setC(x => x - 1), 1000); return () => clearTimeout(id); }, [c]);
   return (
     <Card>
       <div style={{ display: "grid", placeItems: "center", gap: 16 }}>
@@ -613,23 +815,89 @@ function TempFail({ t, onContinue, onBack }) {
 }
 
 /* ===== SPO2 ===== */
+
 function SpO2Info({ t, onMeasure, onBack }) {
+  // === Referencias a los botones ===
+  const medirRef = useRef(null);
+  const backRef = useRef(null);
+  const repeatRef = useRef(null);
+
+  // Los agrupamos para pasarlos al hook
+  const buttons = [medirRef, backRef, repeatRef];
+
+  // === Integración con joystick ===
+  const focused = useJoystickNavigation(buttons, null, onBack);
+
   return (
     <Card>
       <div style={{ display: "grid", gap: 16 }}>
         <H2>{t.spo2_title}</H2>
         <P center>{t.spo2_instr}</P>
-        {/* inserta un video reutilizado del proyecto */}
+
+        {/* Video informativo */}
         <MediaBlock type="video" src="/assets/videos/Colocar_brazo.mp4" height={240} />
+
+        {/* Botones */}
         <div style={{ display: "grid", gap: 12, marginTop: 8, maxWidth: 720 }}>
-          <BtnSolid  wide onClick={() => { SFX.start(); onMeasure(); }}>{t.medir}</BtnSolid>
-          <BtnPrimary wide onClick={onBack}>{t.back}</BtnPrimary>
-          <BtnPrimary wide onClick={() => alert("Reproducir instrucción")}>{t.repeat}</BtnPrimary>
+          <button
+            ref={medirRef}
+            onClick={() => { SFX.start(); onMeasure(); }}
+            style={{
+              width: "100%",
+              background: focused === 0 ? THEME.blueDark : "#B7E5F4",
+              color: focused === 0 ? "#fff" : THEME.text,
+              borderRadius: 999,
+              fontWeight: 800,
+              fontSize: 32,
+              padding: "18px 28px",
+              transition: "all 0.15s ease",
+              outline: focused === 0 ? `6px solid ${THEME.ring}` : "none",
+            }}
+          >
+            {t.medir}
+          </button>
+
+          <button
+            ref={backRef}
+            onClick={onBack}
+            style={{
+              width: "100%",
+              background: focused === 1 ? THEME.blue : "#E2E8F0",
+              color: focused === 1 ? "#fff" : THEME.blueDark,
+              borderRadius: 999,
+              fontWeight: 800,
+              fontSize: 32,
+              padding: "18px 28px",
+              transition: "all 0.15s ease",
+              outline: focused === 1 ? `6px solid ${THEME.ring}` : "none",
+            }}
+          >
+            {t.back}
+          </button>
+
+          <button
+            ref={repeatRef}
+            onClick={() => alert("Reproducir instrucción")}
+            style={{
+              width: "100%",
+              background: focused === 2 ? "#CDECF5" : "#F8FAFC",
+              color: focused === 2 ? THEME.blueDark : THEME.text,
+              borderRadius: 999,
+              fontWeight: 800,
+              fontSize: 32,
+              padding: "18px 28px",
+              transition: "all 0.15s ease",
+              outline: focused === 2 ? `6px solid ${THEME.ring}` : "none",
+            }}
+          >
+            {t.repeat}
+          </button>
         </div>
       </div>
     </Card>
   );
 }
+
 function SpO2Measuring({ t, onBack, onDone, setSpO2 }) {
   useEffect(() => {
     const id = setTimeout(() => {
@@ -691,21 +959,99 @@ function SpO2Fail({ t, onContinue, onBack }) {
 
 // ECG
 function ECGInfo({ title, text, mediaSrc, primaryLabel, onPrimary, onBack }) {
+  // === Referencias a los botones ===
+  const primaryRef = useRef(null);
+  const backRef = useRef(null);
+  const repeatRef = useRef(null);
+
+  // Definir los botones que estarán activos
+  const buttons = onBack ? [primaryRef, backRef, repeatRef] : [primaryRef, repeatRef];
+
+  // === Integración con joystick ===
+  const focused = useJoystickNavigation(buttons, null, onBack);
+
   return (
     <Card>
       <div style={{ display: "grid", gap: 16 }}>
         <H2>{title}</H2>
         <P center>{text}</P>
+
+        {/* Video de instrucción */}
         <MediaBlock type="video" src={mediaSrc} height={240} />
+
+        {/* Botones de acción */}
         <div style={{ display: "grid", gap: 12, marginTop: 8, maxWidth: 720 }}>
-          <BtnSolid  wide onClick={onPrimary}>{primaryLabel}</BtnSolid>
-          {onBack && <BtnPrimary wide onClick={onBack}>Volver</BtnPrimary>}
-          <BtnPrimary wide onClick={() => alert("Reproducir instrucción")}>Repetir instrucción</BtnPrimary>
+          {/* Botón principal */}
+          <button
+            ref={primaryRef}
+            onClick={onPrimary}
+            style={{
+              width: "100%",
+              background: focused === 0 ? THEME.blueDark : "#B7E5F4",
+              color: focused === 0 ? "#fff" : THEME.text,
+              borderRadius: 999,
+              fontWeight: 800,
+              fontSize: 32,
+              padding: "18px 28px",
+              transition: "all 0.15s ease",
+              outline: focused === 0 ? `6px solid ${THEME.ring}` : "none",
+            }}
+          >
+            {primaryLabel}
+          </button>
+
+          {/* Botón de volver (solo si se pasa onBack) */}
+          {onBack && (
+            <button
+              ref={backRef}
+              onClick={onBack}
+              style={{
+                width: "100%",
+                background: focused === 1 ? THEME.blue : "#E2E8F0",
+                color: focused === 1 ? "#fff" : THEME.blueDark,
+                borderRadius: 999,
+                fontWeight: 800,
+                fontSize: 32,
+                padding: "18px 28px",
+                transition: "all 0.15s ease",
+                outline: focused === 1 ? `6px solid ${THEME.ring}` : "none",
+              }}
+            >
+              Volver
+            </button>
+          )}
+
+          {/* Botón de repetir instrucción */}
+          <button
+            ref={repeatRef}
+            onClick={() => alert("Reproducir instrucción")}
+            style={{
+              width: "100%",
+              background:
+                focused === (onBack ? 2 : 1) ? "#CDECF5" : "#F8FAFC",
+              color:
+                focused === (onBack ? 2 : 1)
+                  ? THEME.blueDark
+                  : THEME.text,
+              borderRadius: 999,
+              fontWeight: 800,
+              fontSize: 32,
+              padding: "18px 28px",
+              transition: "all 0.15s ease",
+              outline:
+                focused === (onBack ? 2 : 1)
+                  ? `6px solid ${THEME.ring}`
+                  : "none",
+            }}
+          >
+            Repetir instrucción
+          </button>
         </div>
       </div>
     </Card>
   );
 }
+
 
 function ECGMeasuring({ onDone, onBack, t }) {
   useEffect(() => { const id = setTimeout(onDone, 6000); return () => clearTimeout(id); }, []);
@@ -742,30 +1088,92 @@ function Divider() {
   return <div style={{ height: 2, background: "#7FC9E0", opacity: .9, margin: "10px 0" }} />;
 }
 
-function ResultsScreen({ t, dniMasked, vitals, onSend }) {
+function ResultsScreen({ t, dniMasked, vitals, onSend, onBack }) {
+  // === Referencia al botón principal ===
+  const continuarRef = useRef(null);
+
+  // Agrupamos los botones disponibles (solo uno en este caso)
+  const buttons = [continuarRef];
+
+  // === Hook del joystick ===
+  const focused = useJoystickNavigation(buttons, null, onBack);
+
   return (
     <Card>
       <div style={{ display: "grid", gap: 16 }}>
         <H2>{t.resultados_title}</H2>
-        <div style={{ fontSize: 26, color: "#1F3344" }}><b>{t.dni_label}</b> ******{dniMasked ?? "—"}</div>
+        <div style={{ fontSize: 26, color: "#1F3344" }}>
+          <b>{t.dni_label}</b> ******{dniMasked ?? ""}
+        </div>
+
         <Divider />
+
         <H2>{t.obtenidos_title}</H2>
         <div style={{ textAlign: "center", color: "#1F3344", fontSize: 26 }}>
-          <div style={{ margin: "8px 0" }}>Frecuencia cardiaca: <b>{vitals?.hr ?? "—"} lpm</b></div>
-          <div style={{ margin: "8px 0" }}>Saturación de oxígeno: <b>{vitals?.spo2 ?? "—"} %</b></div>
-          <div style={{ margin: "8px 0" }}>Temperatura: <b>{vitals?.temp ?? "—"} °C</b></div>
-          <div style={{ margin: "8px 0" }}>Frecuencia respiratoria: <b>{vitals?.rr ?? "—"} rpm</b></div>
-          <div style={{ margin: "8px 0" }}>Presión arterial: <b>{(vitals?.sbp && vitals?.dbp) ? `${vitals.sbp}/${vitals.dbp}` : "—"} mmHg</b></div>
+          <div style={{ margin: "8px 0" }}>
+            Frecuencia cardiaca: <b>{vitals?.hr ?? "--"} lpm</b>
+          </div>
+          <div style={{ margin: "8px 0" }}>
+            Saturación de oxígeno: <b>{vitals?.spo2 ?? "--"} %</b>
+          </div>
+          <div style={{ margin: "8px 0" }}>
+            Temperatura: <b>{vitals?.temp ?? "--"} °C</b>
+          </div>
+          <div style={{ margin: "8px 0" }}>
+            Frecuencia respiratoria: <b>{vitals?.rr ?? "--"} rpm</b>
+          </div>
+          <div style={{ margin: "8px 0" }}>
+            Presión arterial:{" "}
+            <b>
+              {vitals?.sbp && vitals?.dbp
+                ? `${vitals.sbp}/${vitals.dbp}`
+                : "--"}{" "}
+              mmHg
+            </b>
+          </div>
         </div>
+
+        {/* Botón “Continuar” */}
         <div style={{ display: "grid", placeItems: "start", marginTop: 12 }}>
           <div style={{ width: "100%", maxWidth: 720 }}>
-            <BtnSolid wide onClick={onSend}>{t.continuar}</BtnSolid>
+            <button
+              ref={continuarRef}
+              onClick={onSend}
+              style={{
+                width: "100%",
+                background: focused === 0 ? THEME.blueDark : "#B7E5F4",
+                color: focused === 0 ? "#fff" : THEME.text,
+                borderRadius: 999,
+                fontWeight: 800,
+                fontSize: 32,
+                padding: "18px 28px",
+                transition: "all 0.15s ease",
+                outline: focused === 0 ? `6px solid ${THEME.ring}` : "none",
+              }}
+            >
+              {t.continuar}
+            </button>
           </div>
         </div>
       </div>
+
+      {/* Efecto de brillo en botón seleccionado */}
+      <style>
+        {`
+        @keyframes pulse {
+          0% { box-shadow: 0 0 0px rgba(31, 177, 151, 0.5); }
+          50% { box-shadow: 0 0 20px rgba(31, 177, 151, 0.9); }
+          100% { box-shadow: 0 0 0px rgba(31, 177, 151, 0.5); }
+        }
+        button[style*="outline: 6px solid"] {
+          animation: pulse 1.2s infinite;
+        }
+      `}
+      </style>
     </Card>
   );
 }
+
 
 function SendingScreen({ t, onNext }) {
   useEffect(() => { const id = setTimeout(() => onNext(), 1600); return () => clearTimeout(id); }, []);
@@ -794,20 +1202,104 @@ function PrintingScreen({ t, onNext }) {
 }
 
 function CongratsScreen({ t, onFinish, onBack }) {
+  // === Referencias a los botones ===
+  const finalizarRef = useRef(null);
+  const volverRef = useRef(null);
+
+  // Agrupamos los botones que el joystick puede navegar
+  const buttons = [finalizarRef, volverRef];
+
+  // === Hook del joystick ===
+  const focused = useJoystickNavigation(buttons, null, onBack);
+
   return (
     <Card>
-      <div style={{ display: "grid", placeItems: "center", gap: 16, maxWidth: 720 }}>
+      <div
+        style={{
+          display: "grid",
+          placeItems: "center",
+          gap: 16,
+          maxWidth: 720,
+          textAlign: "center",
+        }}
+      >
+        {/* Mensaje de felicitación */}
         <H2>{t.felicidades}</H2>
         <P center>{t.felicidades_msg}</P>
-        <MediaBlock type="image" src="/assets/images/Carita_feliz.png" height={72} />
-        <div style={{ display: "grid", gap: 12, width: "100%", marginTop: 8 }}>
-          <BtnSolid wide onClick={onFinish}>{t.finalizar}</BtnSolid>
-          <BtnPrimary wide onClick={onBack}>{t.back}</BtnPrimary>
+
+        {/* Imagen de carita feliz */}
+        <MediaBlock
+          type="image"
+          src="/assets/images/Carita_feliz.png"
+          height={96}
+        />
+
+        {/* Botones de acción */}
+        <div
+          style={{
+            display: "grid",
+            gap: 12,
+            width: "100%",
+            marginTop: 8,
+          }}
+        >
+          {/* Finalizar */}
+          <button
+            ref={finalizarRef}
+            onClick={onFinish}
+            style={{
+              width: "100%",
+              background: focused === 0 ? THEME.blueDark : "#B7E5F4",
+              color: focused === 0 ? "#fff" : THEME.text,
+              borderRadius: 999,
+              fontWeight: 800,
+              fontSize: 32,
+              padding: "18px 28px",
+              transition: "all 0.15s ease",
+              outline: focused === 0 ? `6px solid ${THEME.ring}` : "none",
+            }}
+          >
+            {t.finalizar}
+          </button>
+
+          {/* Retroceder */}
+          <button
+            ref={volverRef}
+            onClick={onBack}
+            style={{
+              width: "100%",
+              background: focused === 1 ? THEME.blue : "#E2E8F0",
+              color: focused === 1 ? "#fff" : THEME.blueDark,
+              borderRadius: 999,
+              fontWeight: 800,
+              fontSize: 32,
+              padding: "18px 28px",
+              transition: "all 0.15s ease",
+              outline: focused === 1 ? `6px solid ${THEME.ring}` : "none",
+            }}
+          >
+            {t.back}
+          </button>
         </div>
       </div>
+
+      {/* ✨ Animación tipo arcade para botón seleccionado */}
+      <style>
+        {`
+        @keyframes pulse {
+          0% { box-shadow: 0 0 0px rgba(31, 177, 151, 0.5); }
+          50% { box-shadow: 0 0 20px rgba(31, 177, 151, 0.9); }
+          100% { box-shadow: 0 0 0px rgba(31, 177, 151, 0.5); }
+        }
+        button[style*="outline: 6px solid"] {
+          animation: pulse 1.2s infinite;
+        }
+      `}
+      </style>
     </Card>
   );
 }
+
 
 // ====== App
 export default function App() {
@@ -818,6 +1310,7 @@ export default function App() {
   const [temp, setTemp] = useState(null);
   const [spo2, setSpo2] = useState(null);
   const [dni, setDni] = useState("");
+  const [focusIndex, setFocusIndex] = useState(0);
 
   // Vitals simulados (y hook WS si quieres mezclar)
   const [vitals, setVitals] = useState(simulateVitals(Date.now()));
@@ -920,8 +1413,45 @@ export default function App() {
   const padLeft = () => { if (state === S.LANG) setLang("es"); };
   const padRight = () => { if (state === S.LANG) setLang("qu"); };
 
-  // Hook de Gamepad
-  useGamepad({ onConfirm: doPrimary, onBack: goBack, onLeft: padLeft, onRight: padRight });
+  // ===== Mejorado: Gamepad con navegación estilo arcade
+  function useJoystickNavigation(buttonRefs, onConfirm, onBack) {
+  const [focused, setFocused] = useState(0);
+  const lastMove = useRef(0);
+
+  useEffect(() => {
+    const loop = () => {
+      const pads = navigator.getGamepads ? navigator.getGamepads() : [];
+      const gp = pads[0];
+      if (gp) {
+        const now = Date.now();
+        const [axX, axY] = gp.axes;
+
+        if (now - lastMove.current > 250) {
+          if (axY < -0.5 || gp.buttons[12]?.pressed) {
+            setFocused((f) => (f - 1 + buttonRefs.length) % buttonRefs.length);
+            lastMove.current = now;
+          } else if (axY > 0.5 || gp.buttons[13]?.pressed) {
+            setFocused((f) => (f + 1) % buttonRefs.length);
+            lastMove.current = now;
+          } else if (axX < -0.5 || gp.buttons[14]?.pressed) {
+            setFocused((f) => (f - 1 + buttonRefs.length) % buttonRefs.length);
+            lastMove.current = now;
+          } else if (axX > 0.5 || gp.buttons[15]?.pressed) {
+            setFocused((f) => (f + 1) % buttonRefs.length);
+            lastMove.current = now;
+          }
+        }
+
+        if (gp.buttons[0]?.pressed) buttonRefs[focused]?.current?.click();
+        if (gp.buttons[1]?.pressed) onBack && onBack();
+      }
+      requestAnimationFrame(loop);
+    };
+    loop();
+  }, [buttonRefs, focused, onConfirm, onBack]);
+
+  return focused;
+}
 
   return (
     <Frame>
